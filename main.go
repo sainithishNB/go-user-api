@@ -1,19 +1,36 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
+	"user-api/database"
 	"user-api/handlers"
+	"user-api/repository"
+	"user-api/service"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("error loading env files")
+	}
+	
 	r := chi.NewRouter()
-	r.Get("/users",handlers.GetUsers)
-	r.Post("/users",handlers.CreateUser)
-	r.Get("/users/{id}",handlers.GetUsersByID)
-	r.Put("/users/update/{id}",handlers.Update)
+	db, err := database.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	repo := repository.NewMySQLRepository(db)
+	service := service.NewUserService(repo)
+	handler := handlers.NewUserHandler(service)
+	r.Get("/users", handler.GetUsers)
+	r.Post("/users", handler.CreateUser)
+	r.Get("/users/{id}", handler.GetUsersByID)
+	r.Put("/users/update/{id}", handler.Update)
+	r.Delete("/users/delete/{id}", handler.Delete)
 	http.ListenAndServe(":8080", r)
-	fmt.Println("Hi")
+
 }

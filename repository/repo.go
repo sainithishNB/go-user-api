@@ -8,17 +8,19 @@ import (
 var users []models.User
 var NextId int
 
-func CreateUser(user models.User) models.User {
+type MemoryRepository struct{}
+
+func (m *MemoryRepository) CreateUser(user models.User) (models.User, error) {
 	NextId++
 	user.ID = NextId
 	users = append(users, user)
-	return user
+	return user, nil
 }
 
-func GetUsers() []models.User {
+func (m *MemoryRepository) GetUsers() []models.User {
 	return users
 }
-func GetUsersByID(id int) (models.User, error) {
+func (m *MemoryRepository) GetUserByID(id int) (models.User, error) {
 	for _, user := range users {
 		if user.ID == id {
 			return user, nil
@@ -27,7 +29,7 @@ func GetUsersByID(id int) (models.User, error) {
 	return models.User{}, errors.New("Not Found")
 }
 
-func UpdateUser(id int, newuser models.User) (models.User, error) {
+func (m *MemoryRepository) UpdateUser(id int, newuser models.User) (models.User, error) {
 
 	for i := range users {
 		if users[i].ID == id {
@@ -39,12 +41,12 @@ func UpdateUser(id int, newuser models.User) (models.User, error) {
 	return models.User{}, errors.New("Not Found")
 }
 
-func DeleteUser(id int) (bool, error) {
+func (m *MemoryRepository) DeleteUser(id int) error {
 	for i := range users {
 		if users[i].ID == id {
 			users = append(users[:i], users[i+1:]...)
-			return true, nil
+			return nil
 		}
 	}
-	return false, errors.New("Not Found")
+	return errors.New("Not Found")
 }
