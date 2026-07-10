@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"user-api/config"
 	"user-api/database"
 	"user-api/handlers"
+	"user-api/logger"
 	"user-api/repository"
 	"user-api/service"
 
@@ -17,15 +19,17 @@ func main() {
 	if err != nil {
 		log.Fatal("error loading env files")
 	}
-	
+	cfg := config.Load()
+	log := logger.NewLogger(cfg)
+	log.Debug("This is a debug log")
+	log.Info("Application started")
+	log.Warn("This is a warning")
+	log.Error("This is an error")
 	r := chi.NewRouter()
-	db, err := database.Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
-	repo := repository.NewMySQLRepository(db)
+	db, err := database.Connect(cfg, log)
+	repo := repository.NewMySQLRepository(db, log)
 	service := service.NewUserService(repo)
-	handler := handlers.NewUserHandler(service)
+	handler := handlers.NewUserHandler(service, log)
 	r.Get("/users", handler.GetUsers)
 	r.Post("/users", handler.CreateUser)
 	r.Get("/users/{id}", handler.GetUsersByID)
